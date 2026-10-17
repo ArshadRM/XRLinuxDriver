@@ -98,8 +98,15 @@ static float get_pitch_adjustment_degrees(device_properties_type* device, driver
     return new_pitch_adjustment;
 }
 
+static bool ipc_setup_complete = false;
 static float desired_pitch_adjustment_degrees = NAN;
 void driver_handle_pose(imu_pose_type pose) {
+    // IMU data can start streaming before setup_ipc() has mapped the shared
+    // memory (e.g. RayNeo, which streams as soon as the device connects).
+    // Drop poses until IPC is ready - the shared memory pointers and control
+    // flags are not valid before that.
+    if (!ipc_setup_complete) return;
+
     // counter that resets every second, for triggering things that we don't want to do every cycle
     static int imu_counter = 0;
     static int multi_tap = 0;
@@ -263,6 +270,8 @@ void setup_ipc() {
             exit(1);
         }
     } else if (config()->debug_ipc) log_debug("setup_ipc, already enabled, doing nothing\n");
+
+    ipc_setup_complete = true;
 
     device_properties_type* device = device_checkout();
     if (device != NULL) {
