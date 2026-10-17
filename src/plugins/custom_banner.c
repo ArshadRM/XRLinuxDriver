@@ -16,7 +16,7 @@ custom_banner_ipc_values_type *custom_banner_ipc_values;
 void evaluate_banner_conditions() {
     device_properties_type* device = device_checkout();
     if (device != NULL) {
-        if (custom_banner_ipc_values) {
+        if (custom_banner_ipc_values && custom_banner_ipc_values->enabled) {
             bool any_conditions_set = false;
             bool banner_device_conditions_met = true;
             if (target_device_vendor_id != 0) {
@@ -41,7 +41,8 @@ void evaluate_banner_conditions() {
             *custom_banner_ipc_values->enabled = any_conditions_set && banner_device_conditions_met && banner_time_conditions_met;
         }
     }
-    set_gamescope_reshade_effect_uniform_variable("custom_banner_enabled", custom_banner_ipc_values->enabled, 1, sizeof(bool), false);
+    if (custom_banner_ipc_values && custom_banner_ipc_values->enabled)
+        set_gamescope_reshade_effect_uniform_variable("custom_banner_enabled", custom_banner_ipc_values->enabled, 1, sizeof(bool), false);
     device_checkin(device);
 }
 
