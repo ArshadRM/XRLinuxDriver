@@ -101,10 +101,7 @@ static float get_pitch_adjustment_degrees(device_properties_type* device, driver
 static bool ipc_setup_complete = false;
 static float desired_pitch_adjustment_degrees = NAN;
 void driver_handle_pose(imu_pose_type pose) {
-    // IMU data can start streaming before setup_ipc() has mapped the shared
-    // memory (e.g. RayNeo, which streams as soon as the device connects).
-    // Drop poses until IPC is ready - the shared memory pointers and control
-    // flags are not valid before that.
+    // IMU data can arrive before setup_ipc() has mapped the shared memory
     if (!ipc_setup_complete) return;
 
     // counter that resets every second, for triggering things that we don't want to do every cycle

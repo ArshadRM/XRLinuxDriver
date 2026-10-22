@@ -404,10 +404,7 @@ bool rayneo_device_connect() {
         soft_connected = true;
         if (!rayneo_imu_streaming) {
             if (!rayneo_command_ok(Rayneo_EnableImu(rayneo_ctx), "enable IMU")) {
-                // Some devices (GT Max) lock the command endpoint while the
-                // IMU stream is already running, so the enable command fails.
-                // If IMU samples are arriving anyway, the IMU is effectively
-                // on and the connection can proceed.
+                // GT Max locks its command endpoint while streaming.
                 bool streaming = false;
                 for (int i = 0; i < 30 && !streaming; i++) {
                     struct timespec ts = {0, 100 * 1000000};
@@ -422,11 +419,7 @@ bool rayneo_device_connect() {
                     pthread_mutex_unlock(&device_connection_mutex);
                     return false;
                 }
-
-                log_message("RayNeo IMU stream already active, continuing without enable command\n");
             }
-        } else {
-            log_message("RayNeo IMU stream already active, skipping enable command\n");
         }
 
         if (!rayneo_request_device_info_locked() && config()->debug_device) {
@@ -470,8 +463,6 @@ device_properties_type* rayneo_supported_device(uint16_t vendor_id, uint16_t pro
     if (rayneo_device_connect()) {
         rayneo_wait_for_device_info(1500);
         device->model = (char*)rayneo_model_name;
-        // The GT Max reports its IMU stream generically; label it from the
-        // USB vendor ID when the SDK doesn't provide a model name.
         if (device->model == rayneo_unknown_model_name && rayneo_matched_vendor_id == RAYNEO_GT_ID_VENDOR)
             device->model = "GT MAX";
 
